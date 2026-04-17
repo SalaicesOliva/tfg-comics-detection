@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Data (imágenes grandes, no van al repo)
+data/raw/
+data/processed/
+*.jp2
+*.tiff
+*.tif
+
+# Modelos entrenados (pesados)
+models/*.pt
+models/*.pth
+
+# Resultados temporales
+results/runs/
+
+# IDE
+.vscode/
+*.DS_Store
