@@ -9,9 +9,14 @@ venv/
 # Data (imágenes grandes, no van al repo)
 data/raw/
 data/processed/
+data/dataset/images/
+data/annotated/
 *.jp2
 *.tiff
 *.tif
+
+# Claude interno
+.claude/
 
 # Modelos entrenados (pesados)
 models/*.pt
