@@ -6,24 +6,32 @@ __pycache__/
 venv/
 *.egg-info/
 
-# Data (imágenes grandes, no van al repo)
+# Data — imágenes y BD (ficheros grandes)
 data/raw/
 data/processed/
-data/dataset/images/
 data/annotated/
+data/dataset/images/
+data/detections.db
 *.jp2
 *.tiff
 *.tif
 
+# Cachés de YOLO
+*.cache
+
+# Modelos descargados y entrenados
+*.pt
+*.pth
+
+# Resultados de entrenamiento e inferencia (pesados)
+runs/detect/
+runs/predict/
+
+# Estadísticas sí se guardan
+!runs/stats/
+
 # Claude interno
 .claude/
-
-# Modelos entrenados (pesados)
-models/*.pt
-models/*.pth
-
-# Resultados temporales
-results/runs/
 
 # IDE
 .vscode/
