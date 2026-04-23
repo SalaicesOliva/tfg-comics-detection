@@ -1,177 +1,141 @@
 # PASOS — Registro de reproducibilidad
 **TFG: Detección de material gráfico en prensa histórica**
 
-Este documento registra todos los pasos realizados para que cualquier persona pueda replicar el proyecto desde cero, en orden cronológico.
+Este documento registra todos los pasos realizados para replicar el proyecto desde cero.
 
 ---
 
-## Paso 0 — Requisitos previos del sistema
+## Requisitos previos del sistema
 
-- Sistema operativo: Windows 10/11
-- Conexión a internet
-- Cuenta en GitHub
-
----
-
-## Paso 1 — Instalar Python 3.11
-
-**Fecha:** 17 abril 2026
-
-Python 3.11 es la versión usada en todo el proyecto (más estable con PyTorch/YOLO que versiones más nuevas).
-
-### Opción A: via winget (recomendado)
-Abrir PowerShell o cmd y ejecutar:
-```
-winget install Python.Python.3.11 --accept-package-agreements --accept-source-agreements
-```
-
-### Opción B: descarga manual
-Ir a https://www.python.org/downloads/ → descargar Python 3.11.x → en el instalador marcar **"Add Python to PATH"** antes de instalar.
-
-### Verificar instalación
-```
-py --version
-```
-Debe mostrar: `Python 3.11.x`
-
-> **Nota Windows:** Si `python` da error o abre la MS Store, usar siempre `py -3.11` en su lugar. Es equivalente.
+- Windows 10/11
+- Python 3.11 ([python.org](https://www.python.org/downloads/))
+- GPU NVIDIA recomendada (el proyecto se ejecutó en una GT 1030 con 2 GB VRAM)
+- Conexión a internet (para descargar dataset e imágenes)
 
 ---
 
-## Paso 2 — Instalar dependencias Python
+## Paso 1 — Instalar dependencias
 
-```
-py -3.11 -m pip install requests opencv-python pillow
+```bash
+# PyTorch con CUDA
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
+
+# Resto de dependencias
+pip install -r requirements.txt
 ```
 
-Para instalar todas las dependencias del proyecto de una vez (una vez clonado el repo):
-```
-py -3.11 -m pip install -r requirements.txt
-```
+> En Windows usar `py -3.11` en lugar de `python` si hay conflicto con la MS Store.
 
 ---
 
-## Paso 3 — Instalar GitHub CLI y autenticarse
+## Paso 2 — Construir el dataset
 
-**Fecha:** 17 abril 2026
-
-```
-winget install GitHub.cli --accept-package-agreements --accept-source-agreements
+```bash
+py -3.11 src/build_dataset.py
 ```
 
-Autenticarse (abre el navegador):
-```
-gh auth login
-```
-Seleccionar: GitHub.com → HTTPS → Login with a web browser → seguir instrucciones.
+Descarga metadatos de **Newspaper Navigator** (Library of Congress, vía HuggingFace),
+selecciona 500 páginas aleatorias, descarga las imágenes desde el servidor IIIF de la LOC
+y convierte las anotaciones al formato YOLO.
 
-Verificar:
+**Resultado:** 492 páginas anotadas divididas en train/val/test (70% / 20% / 10%).
+
 ```
-gh auth status
+data/dataset/
+├── images/   train(344) · val(98) · test(50)
+├── labels/   train(344) · val(98) · test(50)
+└── data.yaml
 ```
+
+> Las imágenes no se suben al repo (están en `.gitignore`). Hay que ejecutar este script
+> en local para reproducir el experimento.
 
 ---
 
-## Paso 4 — Clonar el repositorio
+## Paso 3 — Entrenar el modelo
 
-```
-git clone https://github.com/SalaicesOliva/tfg-comics-detection.git
-cd tfg-comics-detection
+```bash
+py -3.11 src/train.py
 ```
 
-O si se parte desde cero (ya hecho en este proyecto):
-```
-git init
-git remote add origin https://github.com/SalaicesOliva/tfg-comics-detection.git
-```
+Fine-tuning de **YOLOv8n** (`yolov8n.pt`, preentrenado en COCO).
+
+Configuración usada:
+- Épocas: hasta 100 (paró en 77 por early stopping)
+- Mejor época: 69
+- Tamaño de imagen: 416×416 px
+- Batch size: 4
+- GPU: NVIDIA GeForce GT 1030
+
+Resultados sobre validación:
+
+| Métrica | Valor |
+|---------|-------|
+| Precisión | 87.6% |
+| Recall | 91.3% |
+| mAP50 | 94.2% |
+| mAP50-95 | 78.4% |
+
+El mejor modelo se guarda en `runs/comics_yolov8n/weights/best.pt`.
 
 ---
 
-## Paso 5 — Configurar identidad de Git
+## Paso 4 — Inferencia sobre imágenes nuevas
 
-Solo necesario la primera vez en un equipo nuevo:
+```bash
+py -3.11 src/predict.py ruta/a/imagen_o_carpeta/
 ```
-git config --global user.email "tu_email@gmail.com"
-git config --global user.name "TuUsuarioGitHub"
-```
+
+Ejecuta el modelo entrenado y guarda las páginas con los bounding boxes dibujados encima.
 
 ---
 
-## Paso 6 — Descargar imágenes del dataset
+## Paso 5 — Evaluación formal sobre el conjunto de test
 
-**Fecha:** 17 abril 2026 (script creado, pendiente ejecutar)
-
-El script `src/download.py` conecta con la API de Chronicling America y descarga páginas de periódicos históricos (1920-1940) que contienen la palabra "comic" en sus metadatos.
-
-```
-cd tfg-comics-detection
-py -3.11 src/download.py
+```bash
+py -3.11 src/evaluate.py
 ```
 
-Las imágenes se guardan en `data/raw/` en formato `.jpg`.
+Evalúa sobre las 50 imágenes de test (nunca vistas durante el entrenamiento).
 
-**Fuente de datos:** https://chroniclingamerica.loc.gov  
-**API usada:** `https://chroniclingamerica.loc.gov/search/pages/results/?format=json`
-
-> Las imágenes descargadas NO se suben al repositorio (están en `.gitignore`) por su tamaño.
-> Para reproducir, ejecutar este script en el equipo local.
+| Métrica | Valor |
+|---------|-------|
+| Precisión | 64.9% |
+| Recall | 80.7% |
+| mAP50 | 79.8% |
+| mAP50-95 | 66.8% |
 
 ---
 
-## Paso 7 — Preprocesado de imágenes *(pendiente)*
+## Paso 6 — Poblar la base de datos
 
-Script: `src/preprocess.py`
-
-Operaciones previstas:
-- Redimensionar a 640×640 px (tamaño estándar YOLO)
-- Convertir a escala de grises si procede
-- Normalizar contraste (útil para documentos deteriorados)
-
----
-
-## Paso 8 — Anotación del dataset *(pendiente)*
-
-Herramienta: **Roboflow** (https://roboflow.com) o **LabelImg** (local)
-
-Clases a etiquetar:
-- `comic` — tira cómica, viñeta, ilustración narrativa
-
-Formato de salida: **YOLO** (un `.txt` por imagen con coordenadas normalizadas)
-
-Mínimo para primer entrenamiento: ~50-100 imágenes anotadas  
-Objetivo final: ~300-500 imágenes
-
----
-
-## Paso 9 — Entrenamiento del modelo *(pendiente)*
-
-Instalar Ultralytics YOLO:
-```
-py -3.11 -m pip install ultralytics
+```bash
+py -3.11 src/build_db.py
 ```
 
-Script: `src/train.py`
+Ejecuta inferencia sobre todo el dataset y almacena cada detección en `data/detections.db` (SQLite).
 
-Comando base de entrenamiento:
+**Resultado:** 697 viñetas detectadas en 486 páginas. Confianza media: 0.752.
+
+Esquema:
 ```
-yolo train model=yolov8n.pt data=dataset.yaml epochs=50 imgsz=640
+pages      — id, filename, split, lccn, pub_date, batch
+detections — id, page_id, x_center, y_center, width, height, confidence, model
 ```
 
 ---
 
-## Paso 10 — Evaluación *(pendiente)*
+## Paso 7 — Generar estadísticas
 
-Script: `src/inference.py`
+```bash
+py -3.11 src/stats.py
+```
 
-Métricas: precisión, recall, mAP@0.5, mAP@0.5:0.95
+Genera tres gráficas a partir de la base de datos y las guarda en `runs/stats/`:
 
----
-
-## Paso 11 — Base de datos SQLite *(pendiente)*
-
-Script: `src/db.py`
-
-Almacena por cada detección: imagen, clase, confianza, coordenadas, fuente, fecha de la página, identificador del periódico.
+- `detecciones_por_anyo.png` — evolución temporal de viñetas detectadas
+- `vinetas_por_pagina.png` — distribución de viñetas por página
+- `distribucion_confianza.png` — histograma de la confianza del modelo
 
 ---
 
@@ -181,5 +145,11 @@ Almacena por cada detección: imagen, clase, confianza, coordenadas, fuente, fec
 |-------|--------|
 | 17 abr 2026 | Instalación Python 3.11, GitHub CLI, paquetes base |
 | 17 abr 2026 | Creación repo GitHub y estructura de carpetas |
-| 17 abr 2026 | Script `src/download.py` creado |
+| 17 abr 2026 | Script `src/download.py` (exploración inicial API LOC) |
 | 17 abr 2026 | Primer commit y push a GitHub |
+| 19 abr 2026 | Dataset pipeline con Newspaper Navigator (`src/build_dataset.py`) |
+| 19 abr 2026 | Entrenamiento YOLOv8n, script de evaluación y `GUIA.md` |
+| 19 abr 2026 | Script de inferencia (`src/predict.py`) |
+| 19 abr 2026 | Base de datos SQLite (`src/build_db.py`) |
+| 19 abr 2026 | Estadísticas y gráficas (`src/stats.py`) |
+| 19 abr 2026 | README finalizado, requirements.txt y `.gitignore` |
