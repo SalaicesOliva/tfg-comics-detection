@@ -1,20 +1,33 @@
-# TFG — Detección de viñetas en prensa histórica
+# TFG — Detección de material gráfico en prensa histórica
 
-**Trabajo de Fin de Grado — Universidad de Alcalá (UAH)**
+**Trabajo de Fin de Grado — Universidad de Alcalá (UAH) · Sergio Salaices Oliva · 2026**
 
-Sistema basado en YOLOv8 para detectar automáticamente viñetas y cómics en páginas de prensa histórica digitalizada (1850–1950). Usa el dataset pre-etiquetado **Newspaper Navigator** de la Biblioteca del Congreso de EE.UU. como fuente de datos.
+Comparativa de cuatro modelos de segmentación de instancias para detectar viñetas, títulos y fechas en páginas de prensa histórica digitalizada (1850–1950).
+
+---
+
+## Dataset
+
+- **400 imágenes** de prensa histórica americana (Chronicling America / Library of Congress)
+- **5 clases:** `Comic`, `Titulo_Periodico`, `Titulo_Comic`, `Fecha`, `Autor`
+- Anotado manualmente con **CVAT** (segmentación de instancias)
+- Split: **320 train / 80 val**
+- Formato COCO JSON (Mask R-CNN, MaskDINO, DocSAM) y YOLO-seg (YOLOv11n-seg)
 
 ---
 
 ## Resultados
 
-| Métrica | Validación | Test |
-|---------|-----------|------|
-| mAP50 | 94.2% | 79.8% |
-| Precisión | 87.6% | 64.9% |
-| Recall | 91.3% | 80.7% |
+> Métricas estándar COCO. AP = mAP@[0.5:0.95] · AP50 = mAP@0.5
 
-Modelo: YOLOv8n — 697 viñetas detectadas en 486 páginas de periódico.
+| Modelo | Backbone | AP box | AP50 box | AP mask | AP50 mask |
+|--------|----------|-------:|---------:|--------:|----------:|
+| **YOLOv11n-seg** | CSPDarknet | **47.68** | **78.97** | 34.13 | **65.91** |
+| Mask R-CNN X101-FPN | ResNeXt-101 | 36.88 | 60.55 | **36.71** | 58.81 |
+| MaskDINO R50 | ResNet-50 | 2.00 | 4.49 | 2.58 | 4.94 |
+| DocSAM | — | — | — | — | — |
+
+> **Nota MaskDINO:** los resultados bajos son esperables con 320 imágenes y 4000 iteraciones. Los modelos basados en transformer requieren significativamente más datos y tiempo de fine-tuning para converger.
 
 ---
 
@@ -22,73 +35,18 @@ Modelo: YOLOv8n — 697 viñetas detectadas en 486 páginas de periódico.
 
 ```
 tfg-comics-detection/
-├── src/
-│   ├── download.py       # Exploración inicial (API Chronicling America)
-│   ├── build_dataset.py  # Descarga y prepara el dataset desde Newspaper Navigator
-│   ├── train.py          # Entrena YOLOv8n con fine-tuning
-│   ├── predict.py        # Inferencia sobre imágenes nuevas
-│   ├── evaluate.py       # Evaluación formal sobre el conjunto de test
-│   ├── build_db.py       # Almacena detecciones en SQLite
-│   └── stats.py          # Genera gráficas y estadísticas
-├── data/
-│   └── dataset/          # Labels YOLO (imágenes excluidas del repo)
-├── runs/
-│   └── stats/            # Gráficas generadas
-├── requirements.txt
-├── GUIA.md               # Guía detallada del proyecto
-└── README.md
+├── dataset/            # Descripción del dataset
+├── models/
+│   ├── yolo/           # YOLOv11n-seg — entrenamiento local (GT 1030)
+│   ├── mask_rcnn/      # Mask R-CNN X101-FPN — Kaggle T4
+│   ├── maskdino/       # MaskDINO R50 — Kaggle T4
+│   └── docsam/         # DocSAM — pendiente
+└── results/
+    └── comparativa_modelos.csv
 ```
-
----
-
-## Instalación
-
-```bash
-# PyTorch con CUDA (GPU NVIDIA recomendada)
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
-
-# Resto de dependencias
-pip install -r requirements.txt
-```
-
----
-
-## Uso
-
-```bash
-# 1. Construir el dataset (descarga ~170MB de imágenes)
-py -3.11 src/build_dataset.py
-
-# 2. Entrenar el modelo
-py -3.11 src/train.py
-
-# 3. Detectar viñetas en imágenes nuevas
-py -3.11 src/predict.py ruta/a/imagen_o_carpeta/
-
-# 4. Evaluar sobre el conjunto de test
-py -3.11 src/evaluate.py
-
-# 5. Guardar detecciones en base de datos
-py -3.11 src/build_db.py
-
-# 6. Generar estadísticas
-py -3.11 src/stats.py
-```
-
----
-
-## Datos
-
-- **Newspaper Navigator** (Library of Congress) — 526.319 viñetas pre-etiquetadas  
-  `biglam/newspaper-navigator` en HuggingFace
-- Imágenes servidas via protocolo **IIIF** desde `tile.loc.gov`
 
 ---
 
 ## Tecnologías
 
-Python 3.11 · PyTorch 2.6 · YOLOv8 (Ultralytics) · SQLite · HuggingFace Datasets · Matplotlib
-
----
-
-> Para una explicación detallada de cada paso, consulta [GUIA.md](GUIA.md).
+Python 3.11 · PyTorch 2.x · Ultralytics YOLOv11 · Detectron2 · CVAT · Kaggle T4

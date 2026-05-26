@@ -1,0 +1,2 @@
+modelo,AP_box,AP50_box,AP75_box,APs_box,APm_box,APl_box,AP_mask,AP50_mask,AP75_mask,AP_Titulo_Periodico_box,AP_Titulo_Periodico_mask,AP_Fecha_box,AP_Fecha_mask,AP_Comic_box,AP_Comic_mask,AP_Titulo_Comic_box,AP_Titulo_Comic_mask,AP_Autor_box,AP_Autor_mask
+MaskDINO R50,2.0,4.49,1.79,0.01,0.11,3.34,2.58,4.94,2.5,0.18,0.47,0.07,0.04,9.71,12.39,0.01,0.01,0.0,0.0

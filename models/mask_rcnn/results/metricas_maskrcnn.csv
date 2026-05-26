@@ -1,0 +1,2 @@
+modelo,AP_box,AP50_box,AP75_box,APs_box,APm_box,APl_box,AP_mask,AP50_mask,AP75_mask,AP_Titulo_Periodico_box,AP_Titulo_Periodico_mask,AP_Fecha_box,AP_Fecha_mask,AP_Comic_box,AP_Comic_mask,AP_Titulo_Comic_box,AP_Titulo_Comic_mask,AP_Autor_box,AP_Autor_mask
+Mask R-CNN X101-FPN,36.88,60.55,34.98,23.01,28.41,52.04,36.71,58.81,35.33,33.44,32.69,15.08,15.23,79.73,80.46,29.46,29.23,26.7,25.95

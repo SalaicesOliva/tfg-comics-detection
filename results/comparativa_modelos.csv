@@ -1,0 +1,5 @@
+modelo,backbone,AP_box,AP50_box,AP_mask,AP50_mask,dataset_train,dataset_val,plataforma
+YOLOv11n-seg,CSPDarknet,47.68,78.97,34.13,65.91,320,80,Local (GT 1030)
+Mask R-CNN X101-FPN,ResNeXt-101,36.88,60.55,36.71,58.81,320,80,Kaggle T4
+MaskDINO R50,ResNet-50,2.00,4.49,2.58,4.94,320,80,Kaggle T4
+DocSAM,-,-,-,-,-,320,80,pendiente

@@ -1,0 +1,2 @@
+modelo,AP_box,AP50_box,AP_mask,AP50_mask,precision_box,recall_box,precision_mask,recall_mask,epoca_mejor
+YOLOv11n-seg,47.68,78.97,34.13,65.91,72.08,76.09,71.75,61.20,94

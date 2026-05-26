@@ -6,33 +6,33 @@ __pycache__/
 venv/
 *.egg-info/
 
-# Data — imágenes y BD (ficheros grandes)
-data/raw/
-data/processed/
-data/annotated/
-data/dataset/images/
-data/detections.db
-*.jp2
-*.tiff
-*.tif
+# Dataset — imágenes (demasiado grandes)
+dataset/images/
+data/
 
-# Cachés de YOLO
-*.cache
-
-# Modelos descargados y entrenados
+# Pesos de modelos
 *.pt
 *.pth
+*.pkl
+last_checkpoint
 
-# Resultados de entrenamiento e inferencia (pesados)
-runs/detect/
-runs/predict/
+# Logs de TensorBoard
+events.out.tfevents*
 
-# Estadísticas sí se guardan
-!runs/stats/
+# Salidas grandes de inferencia
+instances_predictions.pth
+coco_instances_results.json
 
-# Claude interno
-.claude/
+# Jupyter
+.ipynb_checkpoints/
 
-# IDE
+# Old content (ya no forma parte del proyecto)
+src/
+runs/
+GUIA.md
+PASOS.md
+
+# IDE / OS
 .vscode/
-*.DS_Store
+.DS_Store
+*.cache
